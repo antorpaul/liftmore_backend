@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Sequence
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 from base import Base
 from db.models.exercise import Exercise
@@ -84,15 +83,16 @@ def update_category(db: Session, category: Category):
         Category: The updated category object, or None if not found or on error.
     """
     try:
-        existing_user = db.query(Category).filter(Category.id == category.id).first()
-        if existing_user is None:
+        existing_category = db.query(Category).filter(Category.id == category.id).first()
+        if existing_category is None:
             return None
         else:
-            existing_user.name = category.name
-            existing_user.email = category.email
+            existing_category.name = category.name
+            existing_category.description = category.description
+            existing_category.type = category.type
             db.commit()
-            db.refresh(existing_user)
-            return existing_user
+            db.refresh(existing_category)
+            return existing_category
     except SQLAlchemyError as e:
         db.rollback()
         print(f"Error updating user: {e}")

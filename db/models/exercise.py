@@ -127,7 +127,7 @@ def delete_exercise(db: Session, exercise_id: int):
         # Retrieve the user to ensure it exists
         exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
         if exercise is None:
-            print("User does not exist..")
+            print("Exercise does not exist..")
             return False
         
         # Delete the exercise itself
@@ -138,7 +138,7 @@ def delete_exercise(db: Session, exercise_id: int):
         return True
     except SQLAlchemyError as e:
         db.rollback()
-        print(f"Error deleting user: {e}")
+        print(f"Error deleting exercise: {e}")
         return False
     except Exception as e:
         db.rollback()
