@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from base import Base
+from db.session import Base
 
 class Exercise(Base):
     __tablename__ = 'exercises'

@@ -1,4 +1,4 @@
-from .base import Base
+from ..session import Base
 from .category import Category
 from .exercise import Exercise
 from .routine_session import RoutineSession

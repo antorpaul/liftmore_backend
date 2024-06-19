@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Sequence
 from sqlalchemy.exc import SQLAlchemyError
-from base import Base
+from db.session import Base
 from db.models.exercise import Exercise
 
 class Category(Base):

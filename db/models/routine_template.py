@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, JSON, DateTime, Table
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
-from base import Base
+from db.session import Base
 from exercise_category_bridge import exercises_routine_bridge
 
 class RoutineTemplate(Base):

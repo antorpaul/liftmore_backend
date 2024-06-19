@@ -1,7 +1,7 @@
 
 from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, JSON, DateTime, Table
 from sqlalchemy.orm import relationship
-from base import Base
+from db.session import Base
 
 
 # Define the bridge table for many-to-many relationship between RoutineTemplate and Exercise

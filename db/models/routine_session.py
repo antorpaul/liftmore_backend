@@ -2,7 +2,7 @@ from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Sequ
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from base import Base
+from db.session import Base
 
 class RoutineSession(Base):
     __tablename__ = 'routine_sessions'
