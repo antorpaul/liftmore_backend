@@ -9,7 +9,7 @@ class Category(Base):
     id = Column(Integer, Sequence('categories_id_seq'), primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
     description = Column(String(300))
-    type = Column(String(10), nullable=False, default='exercise')
+    _type = Column(String(10), nullable=False, default='exercise', name='type')
 
     def __repr__(self):
         return f"<Category(id={self.id}, name='{self.name}', description='{self.description}', type='{self.type}')>"
