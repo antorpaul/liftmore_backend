@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Sequence
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import relationship
+
 from db.session import Base
 from db.models.exercise import Exercise
 
@@ -10,6 +12,8 @@ class Category(Base):
     name = Column(String(100), nullable=False, unique=True)
     description = Column(String(300))
     _type = Column(String(10), nullable=False, default='exercise', name='type')
+
+    exercises = relationship('Exercise', back_populates='category')
 
     def __repr__(self):
         return f"<Category(id={self.id}, name='{self.name}', description='{self.description}', type='{self.type}')>"

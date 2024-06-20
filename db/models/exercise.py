@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from db.models.exercises_routine_bridge import exercises_routine_bridge
 from db.session import Base
 
 class Exercise(Base):
@@ -14,6 +15,7 @@ class Exercise(Base):
     category_id = Column(Integer, ForeignKey('categories.id', ondelete='CASCADE'))
 
     category = relationship('Category', back_populates='exercises')
+    routine_templates = relationship('RoutineTemplate', secondary=exercises_routine_bridge, back_populates='exercises')
 
     def __repr__(self):
         return f"<Exercise(id={self.id}, name='{self.name}', description='{self.description}', category_id={self.category_id})>"

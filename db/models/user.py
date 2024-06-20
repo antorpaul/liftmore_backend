@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 from db.session import Base
+from core.schemas.common import CreateUser
 
 class User(Base):
     '''Defines a user object in LiftMore'''
@@ -14,11 +15,13 @@ class User(Base):
 
 from sqlalchemy.orm import Session
 # Create Functions
-def create_user(db: Session, user: User):
+async def create_user(db: Session, user: CreateUser):
     ''' creates a new user given a defined user object '''
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    print(f"user model dump: {user.model_dump_json()}")
+    user_db_entry = User(**user.model_dump())
+    db.add(user_db_entry)
+    await db.commit()
+    await db.refresh(user_db_entry)
     return user
 
 # Retrieve Functions

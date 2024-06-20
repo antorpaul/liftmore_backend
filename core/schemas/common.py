@@ -1,13 +1,27 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, UUID4
 from typing import Dict, Optional
 from datetime import datetime
 
-class User(BaseModel):
+class CreateUser(BaseModel):
+  """
+  Schema defining attributes to create user
+  """
   name: str
   email: str
 
   class Config:
-    orm_mode = True
+    from_attributes = True
+
+class RetrieveUser(BaseModel):
+  """
+  Schema defining attributes to create user
+  """
+  id: UUID4
+  name: str
+  email: str
+
+  class Config:
+    from_attributes = True
 
 class Category(BaseModel):
   name: str
@@ -15,7 +29,7 @@ class Category(BaseModel):
   _type: str
 
   class Config:
-    orm_mode = True
+    from_attributes = True
 
 class Exercise(BaseModel):
   name: str
@@ -23,7 +37,7 @@ class Exercise(BaseModel):
   category_id: int
   
   class Config:
-    orm_mode = True
+    from_attributes = True
 
 class RoutineSessionBase(BaseModel):
   start_time: datetime
@@ -32,7 +46,7 @@ class RoutineSessionBase(BaseModel):
   breakdown: Optional[dict] = None
   
   class Config:
-    orm_mode = True
+    from_attributes = True
 
 class RoutineTemplateBase(BaseModel):
   name: str
@@ -40,4 +54,4 @@ class RoutineTemplateBase(BaseModel):
   sets: Optional[Dict] = None
   
   class Config:
-    orm_mode = True
+    from_attributes = True

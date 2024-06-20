@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, JSON, DateTime, Table
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
+from db.models.exercises_routine_bridge import exercises_routine_bridge
 from db.session import Base
-from exercise_category_bridge import exercises_routine_bridge
 
 class RoutineTemplate(Base):
     __tablename__ = 'routine_templates'
@@ -12,10 +12,7 @@ class RoutineTemplate(Base):
     description = Column(String(300))
     sets = Column(JSON)
 
-    # Define a relationship to the RoutineSession model
     routine_sessions = relationship('RoutineSession', back_populates='routine_template')
-
-    # Define a relationship to the Exercise model through the bridge table
     exercises = relationship('Exercise', secondary=exercises_routine_bridge, back_populates='routine_templates')
 
     def __repr__(self):
