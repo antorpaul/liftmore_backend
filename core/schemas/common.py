@@ -1,8 +1,9 @@
 from pydantic import BaseModel, UUID4
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import datetime
 
-class CreateUser(BaseModel):
+### USER
+class CreateUpdateUser(BaseModel):
   """
   Schema defining attributes to create user
   """
@@ -14,16 +15,24 @@ class CreateUser(BaseModel):
 
 class RetrieveUser(BaseModel):
   """
-  Schema defining attributes to create user
+  Schema defining attributes to get a user
   """
   id: UUID4
-  name: str
-  email: str
 
   class Config:
     from_attributes = True
 
-class Category(BaseModel):
+class DeleteUser(BaseModel):
+  """
+  Schema defining necessary properties to delete user
+  """
+  id: UUID4
+
+  class Config:
+    from_attributes = True
+
+### CATEGORY
+class CreateUpdateCategory(BaseModel):
   name: str
   description: str
   _type: str
@@ -31,7 +40,17 @@ class Category(BaseModel):
   class Config:
     from_attributes = True
 
-class Exercise(BaseModel):
+class RetrieveCategory(BaseModel):
+  id: int
+  name: str
+  description: str
+  _type: str
+
+  class Config:
+    from_attributes = True
+
+### EXERCISE
+class CreateUpdateExercise(BaseModel):
   name: str
   description: str
   category_id: int
@@ -39,19 +58,52 @@ class Exercise(BaseModel):
   class Config:
     from_attributes = True
 
-class RoutineSessionBase(BaseModel):
+class RetrieveExercise(BaseModel):
+  id: int
+  name: str
+  description: str
+  _type: str
+
+  class Config:
+    from_attributes = True
+
+### ROUTINE TEMPLATE
+class CreateUpdateRoutineTemplate(BaseModel):
+  name: str
+  description: Optional[str] = None
+  sets: Optional[Dict] = None
+  exercises: Optional[List[int]] = None  # List of exercise IDs
+
+  class Config:
+      from_attributes = True
+
+class RetrieveRoutineTemplate(BaseModel):
+  id: int
+  name: str
+  description: Optional[str] = None
+  sets: Optional[Dict] = None
+  exercises: Optional[List[RetrieveExercise]] = None
+
+  class Config:
+      from_attributes = True
+    
+### ROUTINE SESSION
+class CreateUpdateRoutineSession(BaseModel):
   start_time: datetime
   end_time: datetime
   routine_template_id: Optional[int] = None
   breakdown: Optional[dict] = None
+  routine_template: RetrieveRoutineTemplate
   
   class Config:
     from_attributes = True
 
-class RoutineTemplateBase(BaseModel):
-  name: str
-  description: Optional[str] = None
-  sets: Optional[Dict] = None
+class RetrieveRoutineSession(BaseModel):
+  start_time: datetime
+  end_time: datetime
+  routine_template_id: Optional[int] = None
+  breakdown: Optional[dict] = None
+  routine_template: RetrieveRoutineTemplate
   
   class Config:
     from_attributes = True

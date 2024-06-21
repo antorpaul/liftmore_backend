@@ -1,5 +1,5 @@
 from typing import List
-from sqlalchemy import Column, Integer, String, ForeignKey, Sequence
+from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -40,7 +40,7 @@ def create_exercise(db: Session, exercise: Exercise):
     return exercise
 
 # Retrieve functions
-def get_exercise_by_id(db: Session, exercise_id: int):
+async def get_exercise_by_id(db: Session, exercise_id: int):
     """
     Retrieves exercise by exercise ID.
     
@@ -51,7 +51,8 @@ def get_exercise_by_id(db: Session, exercise_id: int):
     Returns:
         the exercise if found
     """
-    exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
+    result = await db.execute(select(Exercise).filter_by(id=exercise_id))
+    exercise = result.scalars().first()
     return exercise
 
 def get_exercise_by_name(db: Session, exercise_name: str):

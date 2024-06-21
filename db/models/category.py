@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Sequence
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 
+from core.schemas.common import CreateUpdateCategory
 from db.session import Base
 from db.models.exercise import Exercise
 
@@ -21,7 +22,7 @@ class Category(Base):
 from sqlalchemy.orm import Session
 
 # Create functions
-def create_category(db: Session, category: Category):
+def create_category(db: Session, category: CreateUpdateCategory):
     """
     Creates a new category in the database.
     
@@ -33,9 +34,10 @@ def create_category(db: Session, category: Category):
         Category: The created category object.
     """
     try:
-        db.add(category)
+        category_db_entry = Category(**category.model_dump())
+        db.add(category_db_entry)
         db.commit()
-        db.refresh(category)
+        db.refresh(category_db_entry)
         return category
     except SQLAlchemyError as e:
         db.rollback()
