@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, Sequence
+from sqlalchemy import Column, Integer, String, Sequence, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
+from typing import List
 
-from core.schemas.common import CreateUpdateCategory
+from core.schemas.common import CreateUpdateCategory, RetrieveCategory
 from db.session import Base
 from db.models.exercise import Exercise
 
@@ -12,7 +13,7 @@ class Category(Base):
     id = Column(Integer, Sequence('categories_id_seq'), primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
     description = Column(String(300))
-    _type = Column(String(10), nullable=False, default='exercise', name='type')
+    type = Column(String(10), nullable=False, default='exercise', name='type')
 
     exercises = relationship('Exercise', back_populates='category')
 
@@ -22,7 +23,7 @@ class Category(Base):
 from sqlalchemy.orm import Session
 
 # Create functions
-def create_category(db: Session, category: CreateUpdateCategory):
+async def create_category(db: Session, category: CreateUpdateCategory):
     """
     Creates a new category in the database.
     
@@ -36,19 +37,19 @@ def create_category(db: Session, category: CreateUpdateCategory):
     try:
         category_db_entry = Category(**category.model_dump())
         db.add(category_db_entry)
-        db.commit()
-        db.refresh(category_db_entry)
-        return category
+        await db.commit()
+        await db.refresh(category_db_entry)
+        return category_db_entry
     except SQLAlchemyError as e:
         db.rollback()
-        print(f"Error updating user: {e}")
+        print(f"Error creating category: {e}")
         return None
     except Exception as e:
         print(f"Unexpected Exception: {e}")
         return None
 
 # Retrieve Functions
-def get_category_by_id(db: Session, category_id: int):
+async def get_category_by_id(db: Session, category_id: int):
     """
     Retrieves the category object by ID.
     
@@ -59,10 +60,11 @@ def get_category_by_id(db: Session, category_id: int):
     Returns:
         Category: The retrieved category object.
     """
-    category = db.query(Category).filter(Category.id == category_id).first()
+    result = await db.execute(select(Category).filter_by(id=category_id))
+    category = result.scalars().first()
     return category
 
-def get_category_by_name(db: Session, category_name: int):
+async def get_category_by_name(db: Session, category_name: int):
     """
     Retrieves the category object by name.
     
@@ -73,8 +75,23 @@ def get_category_by_name(db: Session, category_name: int):
     Returns:
         Category: The retrieved category object.
     """
-    category = db.query(Category).filter(Category.name == category_name).first()
+    result = await db.execute(select(Category).filter_by(id=category_name))
+    category = result.scalars().first()
     return category
+
+async def get_all_categories(db: Session) -> List[RetrieveCategory]:
+    """
+    Retrieves all of the categories from the database.
+    
+    Args:
+        db (Session): SQLAlchemy session
+    Returns:
+        List[Category]: List of categories
+    """
+    result = await db.scalars(select(Category).order_by(Category.name))
+    categories = result.all()
+    return [RetrieveCategory.model_validate(category) for category in categories]
+
 
 # Update functions
 def update_category(db: Session, category: Category):

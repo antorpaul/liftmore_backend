@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.schemas import *
 from db.connection import get_db
 from db.models.user import create_user, get_user
-from db.models.category import create_category, get_category_by_id
+from db.models.category import create_category, get_category_by_id, get_all_categories
 from db.models.exercise import create_exercise, get_exercise_by_id
 
 router = APIRouter()
@@ -25,10 +25,15 @@ async def create_new_category(category: CreateUpdateCategory, db: AsyncSession =
 async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
     return await get_category_by_id(db, category_id)
 
+@router.get("/categories", response_model=List[RetrieveCategory])
+async def get_categories(db: AsyncSession = Depends(get_db)):
+    print("get all categories")
+    return await get_all_categories(db)
+
 @router.post("/exercise", response_model=RetrieveExercise)
-async def create_new_category(exercise: CreateUpdateExercise, db: AsyncSession = Depends(get_db)):
+async def create_new_exercise(exercise: CreateUpdateExercise, db: AsyncSession = Depends(get_db)):
     return await create_exercise(db, exercise)
 
 @router.get("/exercise/{exercise_id}", response_model=RetrieveExercise)
-async def get_category(exercise_id: int, db: AsyncSession = Depends(get_db)):
+async def get_exercise_by_id(exercise_id: int, db: AsyncSession = Depends(get_db)):
     return await get_exercise_by_id(db, exercise_id)

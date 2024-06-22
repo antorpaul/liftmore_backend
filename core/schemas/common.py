@@ -35,7 +35,7 @@ class DeleteUser(BaseModel):
 class CreateUpdateCategory(BaseModel):
   name: str
   description: str
-  _type: str
+  type: str
 
   class Config:
     from_attributes = True
@@ -44,7 +44,7 @@ class RetrieveCategory(BaseModel):
   id: int
   name: str
   description: str
-  _type: str
+  type: str
 
   class Config:
     from_attributes = True
@@ -62,7 +62,7 @@ class RetrieveExercise(BaseModel):
   id: int
   name: str
   description: str
-  _type: str
+  category_id: int
 
   class Config:
     from_attributes = True
