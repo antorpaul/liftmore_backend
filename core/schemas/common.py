@@ -7,8 +7,12 @@ class CreateUpdateUser(BaseModel):
   """
   Schema defining attributes to create user
   """
-  name: str
+  first_name: str
+  last_name: str
+  username: str
+  phone_number: str
   email: str
+  password: str
 
   class Config:
     from_attributes = True
@@ -18,6 +22,31 @@ class RetrieveUser(BaseModel):
   Schema defining attributes to get a user
   """
   id: UUID4
+  first_name: str
+  last_name: str
+  username: str
+  phone_number: str
+  email: str
+
+  class Config:
+    from_attributes = True
+
+class UserLoginWithEmail(BaseModel):
+  """
+  Schema defining attributes to login as a user
+  """
+  email: str
+  password: str
+
+  class Config:
+    from_attributes = True
+
+class UserLoginWithPhone(BaseModel):
+  """
+  Schema defining attributes to login as a user
+  """
+  phone_number: str
+  password: str
 
   class Config:
     from_attributes = True

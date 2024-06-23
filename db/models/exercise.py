@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Union
 from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from core.schemas.common import CreateUpdateExercise, RetrieveExercise
 from db.models.exercises_routine_bridge import exercises_routine_bridge
 from db.session import Base
 
@@ -23,9 +24,9 @@ class Exercise(Base):
 from sqlalchemy.orm import Session
 
 # Create functions
-def create_exercise(db: Session, exercise: Exercise):
+async def create_exercise(db: Session, exercise: CreateUpdateExercise):
     """
-    Creates an exercise
+    Creates an exercise in the database
     
     Args:
         db (Session): SQLAlchemy session.
@@ -34,13 +35,22 @@ def create_exercise(db: Session, exercise: Exercise):
     Returns:
         exercise: The exercise that was just created
     """
-    db.add(exercise)
-    db.commit()
-    db.refresh(exercise)
-    return exercise
+    try:
+        exercise_db_entry = Exercise(**exercise.model_dump())
+        db.add(exercise_db_entry)
+        await db.commit()
+        await db.refresh(exercise_db_entry)
+        return exercise_db_entry
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(f"Error creating exercise: {e}")
+        return None
+    except Exception as e:
+        print(f"Unexpected Exception: {e}")
+        return None
 
 # Retrieve functions
-async def get_exercise_by_id(db: Session, exercise_id: int):
+async def get_exercise(db: Session, identifier: Union[int, str]) -> RetrieveExercise | None:
     """
     Retrieves exercise by exercise ID.
     
@@ -51,23 +61,18 @@ async def get_exercise_by_id(db: Session, exercise_id: int):
     Returns:
         the exercise if found
     """
-    result = await db.execute(select(Exercise).filter_by(id=exercise_id))
-    exercise = result.scalars().first()
-    return exercise
-
-def get_exercise_by_name(db: Session, exercise_name: str):
-    """
-    Retrieves exercise by exercise name.
+    if isinstance(identifier, int):
+        result = await db.execute(select(Exercise).filter_by(id=identifier))
+        exercise = result.scalars().first()
+        return exercise
     
-    Args:
-        db (Session): SQLAlchemy session.
-        exercise_name (int): name of the exercise to retrieve.
+    if isinstance(identifier, str):
+        result = await db.execute(select(Exercise).filter(Exercise.name.ilike(f"%{identifier}%")))
+        exercises = result.scalars().all()
+        return [RetrieveExercise.model_validate(exercise) for exercise in exercises]
     
-    Returns:
-        the exercise if found
-    """
-    exercise = db.query(Exercise).filter(Exercise.name == exercise_name).first()
-    return exercise
+    print(f"Invalid identifier provided. Unable to find exercise.")
+    return None
 
 def get_all_exercises_for_category_id(db: Session, category_id: int) -> List[Exercise]:
     """

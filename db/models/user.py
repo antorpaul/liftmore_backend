@@ -1,32 +1,58 @@
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import Column, Integer, String, select
 from db.session import Base
-from core.schemas.common import CreateUpdateUser
+from core.schemas.common import CreateUpdateUser, RetrieveUser
+from passlib.context import CryptContext
 
 class User(Base):
     '''Defines a user object in LiftMore'''
     __tablename__ = 'users'
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
-    name = Column(String, index=True)
+    first_name = Column(String, index=True)
+    last_name = Column(String, index=True)
+    username = Column(String, index=True)
+    phone_number = Column(String, index=True)
     email = Column(String, unique=True, index=True)
+    password = Column(String)
 
 from sqlalchemy.orm import Session
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
 # Create Functions
 async def create_user(db: Session, user: CreateUpdateUser):
     ''' creates a new user given a defined user object '''    
-    user_db_entry = User(**user.model_dump())
+    user_db_entry = User(
+        first_name=user.first_name,
+        last_name=user.last_name,
+        username=user.username,
+        phone_number=user.phone_number,
+        email=user.email,
+        password=get_password_hash(user.password))
+    
     db.add(user_db_entry)
     await db.commit()
     await db.refresh(user_db_entry)
-    return user
+
+    return RetrieveUser(
+        id=user_db_entry.id,
+        first_name=user_db_entry.first_name,
+        last_name=user_db_entry.last_name,
+        username=user_db_entry.username,
+        phone_number=user_db_entry.phone_number,
+        email=user_db_entry.email)
 
 # Retrieve Functions
-def get_user(db: Session, user_id: uuid):
+async def get_user(db: Session, user_id: uuid):
     ''' Retrieves a user with their uuid '''
-    return db.query(User).filter(User.id == user_id).first()
+    result = await db.execute(select(User).filter_by(id=user_id))
+    user = result.scalars().first()
+    return user
 
 # Update Functions
 def update_user(db: Session, user: User):
