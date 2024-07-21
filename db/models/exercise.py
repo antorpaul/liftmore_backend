@@ -1,11 +1,11 @@
 from typing import List, Union
 from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, Session
 from core.schemas.common import CreateUpdateExercise, RetrieveExercise
 from db.models.exercises_routine_bridge import exercises_routine_bridge
 from db.session import Base
+
 
 class Exercise(Base):
     __tablename__ = 'exercises'
@@ -21,7 +21,6 @@ class Exercise(Base):
     def __repr__(self):
         return f"<Exercise(id={self.id}, name='{self.name}', description='{self.description}', category_id={self.category_id})>"
 
-from sqlalchemy.orm import Session
 
 # Create functions
 async def create_exercise(db: Session, exercise: CreateUpdateExercise):
@@ -49,14 +48,15 @@ async def create_exercise(db: Session, exercise: CreateUpdateExercise):
         print(f"Unexpected Exception: {e}")
         return None
 
+
 # Retrieve functions
-async def get_exercise(db: Session, identifier: Union[int, str]) -> RetrieveExercise | None:
+async def get_exercise(db: Session, identifier: Union[int, str]) -> Union[RetrieveExercise | None, List[RetrieveExercise]]:
     """
     Retrieves exercise by exercise ID.
     
     Args:
         db (Session): SQLAlchemy session.
-        exercise_id (int): ID of the exercise to retrieve.
+        identifier (int | str): ID or name of the exercise to retrieve.
     
     Returns:
         the exercise if found
@@ -65,14 +65,18 @@ async def get_exercise(db: Session, identifier: Union[int, str]) -> RetrieveExer
         result = await db.execute(select(Exercise).filter_by(id=identifier))
         exercise = result.scalars().first()
         return exercise
-    
+
     if isinstance(identifier, str):
-        result = await db.execute(select(Exercise).filter(Exercise.name.ilike(f"%{identifier}%")))
+        result = await db.execute(
+            select(Exercise)
+            .filter(Exercise.name.ilike(f"%{identifier}%"))
+        )
         exercises = result.scalars().all()
         return [RetrieveExercise.model_validate(exercise) for exercise in exercises]
-    
+
     print(f"Invalid identifier provided. Unable to find exercise.")
     return None
+
 
 def get_all_exercises_for_category_id(db: Session, category_id: int) -> List[Exercise]:
     """
@@ -87,6 +91,7 @@ def get_all_exercises_for_category_id(db: Session, category_id: int) -> List[Exe
     """
     exercises = db.query(Exercise).filter(Exercise.category_id == category_id).all()
     return exercises
+
 
 # Update functions
 def update_exercise(db: Session, exercise: Exercise):
@@ -118,7 +123,8 @@ def update_exercise(db: Session, exercise: Exercise):
     except Exception as e:
         print(f"Unexpected Exception: {e}")
         return None
-    
+
+
 # Delete functions
 def delete_exercise(db: Session, exercise_id: int):
     """
@@ -137,10 +143,10 @@ def delete_exercise(db: Session, exercise_id: int):
         if exercise is None:
             print("Exercise does not exist..")
             return False
-        
+
         # Delete the exercise itself
         db.delete(exercise)
-        
+
         # Commit the transaction
         db.commit()
         return True

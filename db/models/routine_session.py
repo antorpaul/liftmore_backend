@@ -1,8 +1,10 @@
+from typing import Union
+
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Sequence
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 from db.session import Base
+
 
 class RoutineSession(Base):
     __tablename__ = 'routine_sessions'
@@ -19,35 +21,35 @@ class RoutineSession(Base):
     def __repr__(self):
         return f"<RoutineSession(id={self.id}, start_time='{self.start_time}', end_time='{self.end_time}', routine_template_id={self.routine_template_id}, breakdown={self.breakdown})>"
 
-from sqlalchemy.orm import Session
 
 # Create functions
-def create_routine_session(db: Session, session: Session):
+def create_routine_session(db: Session, routine_session: RoutineSession) -> Union[RoutineSession, None]:
     """
     Creates a new routine session in the database.
     
     Args:
         db (Session): SQLAlchemy session.
-        session (RoutineSession): RoutineSession object to be created.
+        routine_session (RoutineSession): RoutineSession object to be created.
     
     Returns:
         RoutineSession: The created RoutineSession object.
     """
     try:
-        db.add(session)
+        db.add(routine_session)
         db.commit()
-        db.refresh(session)
-        return session
+        db.refresh(routine_session)
+        return routine_session
     except SQLAlchemyError as e:
         db.rollback()
-        print(f"Error updating user: {e}")
+        print(f"Error creating routine session: {e}")
         return None
     except Exception as e:
         print(f"Unexpected Exception: {e}")
         return None
 
+
 # Retrieve functions
-def get_session_by_id(db: Session, session_id: int):
+def get_session_by_id(db: Session, session_id: int) -> RoutineSession:
     """
     Retrieves the routine session object by ID.
     
@@ -61,26 +63,27 @@ def get_session_by_id(db: Session, session_id: int):
     session = db.query(RoutineSession).filter(RoutineSession.id == session_id).first()
     return session
 
+
 # Update functions
-def update_session(db: Session, session: RoutineSession) -> RoutineSession | None:
+def update_session(db: Session, routine_session: RoutineSession) -> Union[RoutineSession, None]:
     """
     Updates the session object with the specified session.
     
     Args:
         db (Session): SQLAlchemy session.
-        session (RoutineSession): Session object with updated values.
+        routine_session (RoutineSession): Session object with updated values.
     
     Returns:
         session: The updated routine session object, or None if not found or on error.
     """
     try:
-        existing_session = db.query(RoutineSession).filter(RoutineSession.id == session.id).first()
+        existing_session = db.query(RoutineSession).filter(RoutineSession.id == routine_session.id).first()
         if existing_session is None:
             return None
         else:
-            existing_session.start_time = session.start_time
-            existing_session.end_time = session.end_time
-            existing_session.breakdown = session.breakdown
+            existing_session.start_time = routine_session.start_time
+            existing_session.end_time = routine_session.end_time
+            existing_session.breakdown = routine_session.breakdown
 
             db.commit()
             db.refresh(existing_session)
@@ -93,14 +96,15 @@ def update_session(db: Session, session: RoutineSession) -> RoutineSession | Non
         print(f"Unexpected Exception: {e}")
         return None
 
+
 # Delete functions
-def delete_exercise(db: Session, session_id: int):
+def delete_exercise(db: Session, session_id: int) -> bool:
     """
     Deletes an exercise.
     
     Args:
         db (Session): SQLAlchemy session.
-        user_id (int): ID of the exercise to delete.
+        session_id (int): ID of the routine session to delete.
     
     Returns:
         bool: True if deletion was successful, False otherwise.

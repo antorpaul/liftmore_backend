@@ -10,9 +10,11 @@ from db.models.exercise import create_exercise, get_exercise
 
 category_router = APIRouter()
 
+
 @category_router.post("/category", response_model=RetrieveCategory)
 async def create_new_category(category: CreateUpdateCategory, db: AsyncSession = Depends(get_db)):
     return await create_category(db, category)
+
 
 @category_router.get("/category/{category_id}", response_model=RetrieveCategory | Dict)
 async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
@@ -20,6 +22,7 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
     if category is None:
         return {}
     return category
+
 
 @category_router.get("/categories", response_model=List[RetrieveCategory] | List)
 async def get_categories(db: AsyncSession = Depends(get_db)):

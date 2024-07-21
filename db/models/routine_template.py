@@ -1,8 +1,14 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, JSON, DateTime, Table
+from typing import Union, List
+
+from sqlalchemy import Column, Integer, String, ForeignKey, Sequence, JSON, DateTime, Table, select, delete
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session, selectinload
+
+from core.schemas import CreateUpdateRoutineTemplate
+from db.models import Exercise
 from db.models.exercises_routine_bridge import exercises_routine_bridge
 from db.session import Base
+
 
 class RoutineTemplate(Base):
     __tablename__ = 'routine_templates'
@@ -17,11 +23,10 @@ class RoutineTemplate(Base):
 
     def __repr__(self):
         return f"<RoutineTemplate(id={self.id}, name='{self.name}', description='{self.description}', sets={self.sets})>"
-    
-from sqlalchemy.orm import Session
+
 
 # Create functions
-def create_template(db: Session, template: RoutineTemplate):
+async def create_template(db: Session, template: CreateUpdateRoutineTemplate) -> Union[RoutineTemplate, None]:
     """
     Creates a new Routine Template in the database.
     
@@ -33,20 +38,35 @@ def create_template(db: Session, template: RoutineTemplate):
         Routine Template: The created routine template object.
     """
     try:
-        db.add(template)
-        db.commit()
-        db.refresh(template)
-        return template
+        # print("Template Info:")
+        # print(template.name)
+        # print(template.description)
+        # print(template.sets)
+        # print(template.exercises)
+        # print("\n")
+        # Get the exercises first
+        get_exercises_query = await db.execute(select(Exercise).filter(Exercise.id.in_(template.exercises)))
+        exercises = get_exercises_query.scalars().all()
+        template_db_entry = RoutineTemplate(
+            name=template.name,
+            description=template.description,
+            sets=template.sets)
+        template_db_entry.exercises = exercises
+        db.add(template_db_entry)
+        await db.commit()
+        await db.refresh(template_db_entry)
+        return template_db_entry
     except SQLAlchemyError as e:
-        db.rollback()
+        await db.rollback()
         print(f"Error updating user: {e}")
         return None
     except Exception as e:
         print(f"Unexpected Exception: {e}")
         return None
-    
+
+
 # Retrieve functions
-def get_template_by_id(db: Session, template_id: int):
+async def get_template_by_id(db: Session, template_id: int) -> Union[RoutineTemplate, None]:
     """
     Retrieves the routine template object by ID.
     
@@ -57,11 +77,18 @@ def get_template_by_id(db: Session, template_id: int):
     Returns:
         Template: The retrieved routine template object.
     """
-    template = db.query(RoutineTemplate).filter(RoutineTemplate.id == template_id).first()
+    result = await db.execute(
+        select(RoutineTemplate)
+        .where(RoutineTemplate.id == template_id)
+        .options(selectinload(RoutineTemplate.exercises), selectinload(RoutineTemplate.routine_sessions)))
+    template = result.scalars().first()
+    if template is None:
+        return {}
     return template
 
+
 # Update functions
-def update_routine(db: Session, template: RoutineTemplate):
+def update_routine(db: Session, template: RoutineTemplate) -> Union[RoutineTemplate, None]:
     """
     Updates the routine template object with the specified template.
     
@@ -91,8 +118,25 @@ def update_routine(db: Session, template: RoutineTemplate):
         print(f"Unexpected Exception: {e}")
         return None
 
+
+async def get_exercises_from_routine(db: Session, template_id: int) -> List[Exercise]:
+    """ Gets all the exercises in a routine template """
+    try:
+        exercises = await db.execute(
+            select(exercises_routine_bridge)
+            .where(exercises_routine_bridge.routine_template_id == template_id)
+        ).scalars().all()
+        return exercises
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(f"Error getting exercises from routine template: {e}")
+    except Exception as e:
+        db.rollback()
+        print(f"Unexpected Exception: {e}")
+
+
 # Delete functions
-def delete_routine_template(db: Session, template_id: int):
+async def delete_routine_template(db: Session, template_id: int) -> bool:
     """
     Deletes a routine template and all exercises associated with that routine template.
     
@@ -104,26 +148,27 @@ def delete_routine_template(db: Session, template_id: int):
         bool: True if deletion was successful, False otherwise.
     """
     try:
+        print("hello")
         # Retrieve the routine template to ensure it exists
-        category = db.query(RoutineTemplate).filter(RoutineTemplate.id == template_id).first()
-        if category is None:
+        template = await get_template_by_id(db, template_id)
+        if template is None:
             print("Routine Template not found.")
             return False
-        
-        # Delete all exercises associated with the category
-        db.query(RoutineTemplate).filter(RoutineTemplate.id == template_id).delete()
-
-        # Delete the category itself
-        db.delete(category)
-        
-        # Commit the transaction
-        db.commit()
-        return True
+        delete_template_by_id = (
+            delete(RoutineTemplate)
+            .where(RoutineTemplate.id == template_id)
+        )
+        result = await db.execute(delete_template_by_id)
+        await db.commit()
+        if result.rowcount == 1:
+            return True
+        else:
+            return False
     except SQLAlchemyError as e:
-        db.rollback()
+        await db.rollback()
         print(f"Error deleting routine template: {e}")
         return False
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         print(f"Unexpected exception: {e}")
         return False

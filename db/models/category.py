@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, String, Sequence, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 from typing import List
 
 from core.schemas.common import CreateUpdateCategory, RetrieveCategory
 from db.session import Base
 from db.models.exercise import Exercise
+
 
 class Category(Base):
     __tablename__ = 'categories'
@@ -19,8 +20,7 @@ class Category(Base):
 
     def __repr__(self):
         return f"<Category(id={self.id}, name='{self.name}', description='{self.description}', type='{self.type}')>"
-    
-from sqlalchemy.orm import Session
+
 
 # Create functions
 async def create_category(db: Session, category: CreateUpdateCategory):
@@ -48,6 +48,7 @@ async def create_category(db: Session, category: CreateUpdateCategory):
         print(f"Unexpected Exception: {e}")
         return None
 
+
 # Retrieve Functions
 async def get_category_by_id(db: Session, category_id: int):
     """
@@ -64,6 +65,7 @@ async def get_category_by_id(db: Session, category_id: int):
     category = result.scalars().first()
     return category
 
+
 async def get_category_by_name(db: Session, category_name: int):
     """
     Retrieves the category object by name.
@@ -79,9 +81,10 @@ async def get_category_by_name(db: Session, category_name: int):
     category = result.scalars().first()
     return category
 
+
 async def get_all_categories(db: Session) -> List[RetrieveCategory]:
     """
-    Retrieves all of the categories from the database.
+    Retrieves all the categories from the database.
     
     Args:
         db (Session): SQLAlchemy session
@@ -124,6 +127,7 @@ def update_category(db: Session, category: Category):
         print(f"Unexpected Exception: {e}")
         return None
 
+
 # Delete functions
 def delete_category(db: Session, category_id: int):
     """
@@ -142,13 +146,13 @@ def delete_category(db: Session, category_id: int):
         if category is None:
             print("Category not found.")
             return False
-        
+
         # Delete all exercises associated with the category
         db.query(Exercise).filter(Exercise.category_id == category_id).delete()
 
         # Delete the category itself
         db.delete(category)
-        
+
         # Commit the transaction
         db.commit()
         return True
