@@ -24,7 +24,7 @@ async def get_category(category_id: int, db: AsyncSession = Depends(get_db)):
     return category
 
 
-@category_router.get("/categories", response_model=List[RetrieveCategory] | List)
+@category_router.get("/categories/all", response_model=List[RetrieveCategory] | List)
 async def get_categories(db: AsyncSession = Depends(get_db)):
     categories = await get_all_categories(db)
     if categories is None:

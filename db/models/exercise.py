@@ -78,6 +78,13 @@ async def get_exercise(db: Session, identifier: Union[int, str]) -> Union[Retrie
     return None
 
 
+async def get_all_exercises_query(db: Session) -> List[RetrieveExercise]:
+    """ Retrieves all exercises in the database """
+    result = await db.execute(select(Exercise))
+    exercises = result.scalars().all()
+    return exercises
+
+
 def get_all_exercises_for_category_id(db: Session, category_id: int) -> List[Exercise]:
     """
     Retrieves all exercises by category ID.
