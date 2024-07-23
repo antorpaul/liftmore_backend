@@ -78,25 +78,28 @@ async def get_exercise(db: Session, identifier: Union[int, str]) -> Union[Retrie
     return None
 
 
-async def get_all_exercises_query(db: Session) -> List[RetrieveExercise]:
+async def get_all_exercises_query(db: Session, page: int, page_size: int) -> List[RetrieveExercise]:
     """ Retrieves all exercises in the database """
-    result = await db.execute(select(Exercise))
+    result = await db.execute(select(Exercise).order_by(Exercise.name))
     exercises = result.scalars().all()
     return exercises
 
 
-def get_all_exercises_for_category_id(db: Session, category_id: int) -> List[Exercise]:
+async def get_all_exercises_for_category_id(db: Session, category_id: int, page: int, page_size: int) -> List[Exercise]:
     """
     Retrieves all exercises by category ID.
     
     Args:
+        page: page to retrieve
+        page_size: size of the page
         db (Session): SQLAlchemy session.
         category_id (int): ID of the category whose exercises to retrieve.
     
     Returns:
         list: List of exercises for the given category ID.
     """
-    exercises = db.query(Exercise).filter(Exercise.category_id == category_id).all()
+    result = await db.execute(select(Exercise).where(Exercise.category_id == category_id).order_by(Exercise.name))
+    exercises = result.scalars().all()
     return exercises
 
 

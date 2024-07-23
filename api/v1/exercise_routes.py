@@ -6,7 +6,7 @@ from core.schemas import *
 from db.connection import get_db
 from db.models.user import create_user, get_user
 from db.models.category import create_category, get_category_by_id, get_all_categories
-from db.models.exercise import create_exercise, get_exercise, get_all_exercises_query
+from db.models.exercise import create_exercise, get_exercise, get_all_exercises_query, get_all_exercises_for_category_id
 
 exercise_router = APIRouter()
 
@@ -22,8 +22,14 @@ async def get_exercise_by_id(exercise_id: int, db: AsyncSession = Depends(get_db
 
 
 @exercise_router.get("/exercises/all", response_model=List[RetrieveExercise] | None)
-async def get_all_exercises(db: AsyncSession = Depends(get_db)):
-    return await get_all_exercises_query(db)
+async def get_all_exercises(db: AsyncSession = Depends(get_db),
+                            page: int = Query(-1, description="page of results"),
+                            page_size: int = Query(-1, description="size of page"),
+                            category_id: int = Query(-1, description="id of the category to get")):
+    if category_id == -1:
+        return await get_all_exercises_query(db, page, page_size)
+    else:
+        return await get_all_exercises_for_category_id(db, category_id, page, page_size)
 
 
 @exercise_router.get("/exercise/search", response_model=Union[List[RetrieveExercise], List])
