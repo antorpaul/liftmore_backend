@@ -23,8 +23,8 @@ async def get_exercise_by_id(exercise_id: int, db: AsyncSession = Depends(get_db
 
 @exercise_router.get("/exercises/all", response_model=List[RetrieveExercise] | None)
 async def get_all_exercises(db: AsyncSession = Depends(get_db),
-                            page: int = Query(-1, description="page of results"),
-                            page_size: int = Query(-1, description="size of page"),
+                            page: int = Query(0, description="page of results"),
+                            page_size: int = Query(10, description="size of page"),
                             category_id: int = Query(-1, description="id of the category to get")):
     if category_id == -1:
         return await get_all_exercises_query(db, page, page_size)

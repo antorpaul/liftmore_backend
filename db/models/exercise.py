@@ -80,7 +80,11 @@ async def get_exercise(db: Session, identifier: Union[int, str]) -> Union[Retrie
 
 async def get_all_exercises_query(db: Session, page: int, page_size: int) -> List[RetrieveExercise]:
     """ Retrieves all exercises in the database """
-    result = await db.execute(select(Exercise).order_by(Exercise.name))
+    result = await db.execute(
+        select(Exercise)
+        .order_by(Exercise.name)
+        .limit(page_size)
+        .offset(page * page_size))
     exercises = result.scalars().all()
     return exercises
 
@@ -98,7 +102,12 @@ async def get_all_exercises_for_category_id(db: Session, category_id: int, page:
     Returns:
         list: List of exercises for the given category ID.
     """
-    result = await db.execute(select(Exercise).where(Exercise.category_id == category_id).order_by(Exercise.name))
+    result = await db.execute(
+        select(Exercise)
+        .where(Exercise.category_id == category_id)
+        .order_by(Exercise.name)
+        .limit(page_size)
+        .offset(page * page_size))
     exercises = result.scalars().all()
     return exercises
 
